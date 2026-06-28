@@ -4,12 +4,13 @@ import os
 import time
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(current_dir))
+sys.path.append(project_root)
 sys.path.append(current_dir)
 
 from stream_reader import read_recent_changes
 from kafka_producer import WikimediaKafkaProducer
-
-KAFKA_TOPIC = 'wikimedia-recentchanges'
+from config.kafka_config import get_kafka_config
 
 def run():
     if sys.stdout.encoding != 'utf-8':
@@ -21,13 +22,14 @@ def run():
 
     print("=== BẮT ĐẦU LUỒNG INGESTION WIKIMEDIA KAFKA ===")
     
+    kafka_cfg = get_kafka_config()
     try:
-        producer = WikimediaKafkaProducer(bootstrap_servers='localhost:9094', topic=KAFKA_TOPIC)
+        producer = WikimediaKafkaProducer(bootstrap_servers=kafka_cfg.bootstrap_servers, topic=kafka_cfg.topic)
     except Exception as e:
         print(f"Không thể khởi động Kafka Producer: {e}. Kết thúc ứng dụng.", file=sys.stderr)
         sys.exit(1)
 
-    print(f"Đang kết nối SSE, đọc và đẩy dữ liệu thô vào Kafka topic: '{KAFKA_TOPIC}'...")
+    print(f"Đang kết nối SSE, đọc và đẩy dữ liệu thô vào Kafka topic: '{kafka_cfg.topic}'...")
     print("Nhấn Ctrl+C để dừng chương trình bất cứ lúc nào.\n")
     
     count = 0
